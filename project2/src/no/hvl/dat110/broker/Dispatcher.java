@@ -1,6 +1,5 @@
 package no.hvl.dat110.broker;
 
-import java.util.Set;
 import java.util.Collection;
 
 import no.hvl.dat110.common.Logger;
@@ -89,6 +88,10 @@ public class Dispatcher extends Stopable {
 		Logger.log("onConnect:" + msg.toString());
 
 		storage.addClientSession(user, connection);
+		for(Message ms : storage.getMessages(user)) {
+			storage.getSession(user).send(ms);
+		}
+		storage.removeMessage(user);
 
 	}
 
@@ -100,55 +103,60 @@ public class Dispatcher extends Stopable {
 		Logger.log("onDisconnect:" + msg.toString());
 
 		storage.removeClientSession(user);
+		
 
 	}
 
 	public void onCreateTopic(CreateTopicMsg msg) {
-
+		
+		String topic = msg.getTopic();
 		Logger.log("onCreateTopic:" + msg.toString());
 
-		// TODO: create the topic in the broker storage 
-		
-		throw new RuntimeException("not yet implemented");
+		storage.createTopic(topic);
 
 	}
 
 	public void onDeleteTopic(DeleteTopicMsg msg) {
 
-		Logger.log("onDeleteTopic:" + msg.toString());
-
-		// TODO: delete the topic from the broker storage
+		String topic = msg.getTopic();
 		
-		throw new RuntimeException("not yet implemented");
+		Logger.log("onDeleteTopic:" + msg.toString());
+		
+		storage.deleteTopic(topic);
 	}
 
 	public void onSubscribe(SubscribeMsg msg) {
+		
+		String user = msg.getUser();
+		String topic = msg.getTopic();
 
 		Logger.log("onSubscribe:" + msg.toString());
 
-		// TODO: subscribe user to the topic
-		
-		throw new RuntimeException("not yet implemented");
+		storage.addSubscriber(user, topic);
 		
 	}
 
 	public void onUnsubscribe(UnsubscribeMsg msg) {
 
+		String user = msg.getUser();
+		String topic = msg.getTopic();
 		Logger.log("onUnsubscribe:" + msg.toString());
 
-		// TODO: unsubscribe user to the topic
-		
-		throw new RuntimeException("not yet implemented");
+		storage.removeSubscriber(user, topic);
 
 	}
 
 	public void onPublish(PublishMsg msg) {
-
+		ClientSession session = storage.getSession(msg.getUser());
 		Logger.log("onPublish:" + msg.toString());
+		if(session != null) {
+			for(String user: storage.getSubscribers(msg.getTopic())) {
+			storage.clients.get(user).send(msg);
+			}
+		}
+		else {
+			storage.addMessage(msg.getUser(), msg);
+		}
 
-		// TODO: publish the message to clients subscribed to the topic
-		
-		throw new RuntimeException("not yet implemented");
-		
 	}
 }

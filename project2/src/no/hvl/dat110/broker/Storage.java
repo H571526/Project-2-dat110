@@ -1,20 +1,25 @@
 package no.hvl.dat110.broker;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import no.hvl.dat110.common.Logger;
+import no.hvl.dat110.messages.Message;
 import no.hvl.dat110.messagetransport.Connection;
 
 public class Storage {
 
 	protected ConcurrentHashMap<String, Set<String>> subscriptions;
 	protected ConcurrentHashMap<String, ClientSession> clients;
+	protected ConcurrentHashMap<String, ArrayDeque<Message>> messages;
 
 	public Storage() {
 		subscriptions = new ConcurrentHashMap<String, Set<String>>();
 		clients = new ConcurrentHashMap<String, ClientSession>();
+		messages = new ConcurrentHashMap<String, ArrayDeque<Message>>();
 	}
 
 	public Collection<ClientSession> getSessions() {
@@ -25,6 +30,11 @@ public class Storage {
 
 		return subscriptions.keySet();
 
+	}
+	
+	public ArrayDeque<Message> getMessages(String user) {
+
+		return messages.get(user);
 	}
 
 	public ClientSession getSession(String user) {
@@ -42,48 +52,48 @@ public class Storage {
 
 	public void addClientSession(String user, Connection connection) {
 
-		// TODO: add corresponding client session to the storage
-		
-		throw new RuntimeException("not yet implemented");
+		clients.put(user, new ClientSession(user,connection));
 		
 	}
 
 	public void removeClientSession(String user) {
 
-		// TODO: remove client session for user from the storage
-
-		throw new RuntimeException("not yet implemented");
+		clients.remove(user);
 		
 	}
 
 	public void createTopic(String topic) {
 
-		// TODO: create topic in the storage
-
-		throw new RuntimeException("not yet implemented");
+		subscriptions.put(topic, new HashSet<String>());
 	
 	}
 
 	public void deleteTopic(String topic) {
 
-		// TODO: delete topic from the storage
-
-		throw new RuntimeException("not yet implemented");
+		subscriptions.remove(topic);
 		
 	}
 
 	public void addSubscriber(String user, String topic) {
 
-		// TODO: add the user as subscriber to the topic
-		
-		throw new RuntimeException("not yet implemented");
+		subscriptions.get(topic).add(user);
 		
 	}
 
 	public void removeSubscriber(String user, String topic) {
 
-		// TODO: remove the user as subscriber to the topic
+		subscriptions.get(topic).remove(user);
+	}
+	
+	public void addMessage(String user, Message msg) {
 
-		throw new RuntimeException("not yet implemented");
+		messages.putIfAbsent(user, new ArrayDeque<Message>());
+		messages.get(user).add(msg);
+		
+	}
+
+	public void removeMessage(String user) {
+
+		messages.remove(user);
 	}
 }
